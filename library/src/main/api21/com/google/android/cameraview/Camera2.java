@@ -30,6 +30,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.ImageReader.OnImageAvailableListener;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.SparseIntArray;
@@ -45,6 +46,8 @@ import java.util.SortedSet;
 class Camera2 extends CameraViewImpl {
 
     private static final String TAG = "Camera2";
+
+    private static final boolean DOWNGRADE_TO_CAMERA1 = false;
 
     private static final SparseIntArray INTERNAL_FACINGS = new SparseIntArray();
 
@@ -156,6 +159,7 @@ class Camera2 extends CameraViewImpl {
 
         @Override
         public void onImageAvailable(ImageReader reader) {
+            Log.d("hackajx", "--Camera2.onImageAvailable :");
             try (Image image = reader.acquireNextImage()) {
                 Image.Plane[] planes = image.getPlanes();
                 if (planes.length > 0) {
@@ -164,6 +168,9 @@ class Camera2 extends CameraViewImpl {
                     buffer.get(data);
                     mCallback.onPictureTaken(data);
                 }
+            }catch (Exception ex){
+                Log.d("hackajx", "--Camera2.onImageAvailable :"+ex);
+
             }
         }
 
@@ -363,9 +370,11 @@ class Camera2 extends CameraViewImpl {
                 CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(id);
                 Integer level = characteristics.get(
                         CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-                if (level == null ||
+                if (DOWNGRADE_TO_CAMERA1){
+                    if (level == null ||
                         level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
-                    continue;
+                        continue;
+                    }
                 }
                 Integer internal = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (internal == null) {
@@ -382,10 +391,13 @@ class Camera2 extends CameraViewImpl {
             mCameraCharacteristics = mCameraManager.getCameraCharacteristics(mCameraId);
             Integer level = mCameraCharacteristics.get(
                     CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-            if (level == null ||
+            if (DOWNGRADE_TO_CAMERA1){
+                if (level == null ||
                     level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
-                return false;
+                    return false;
+                }
             }
+
             Integer internal = mCameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
             if (internal == null) {
                 throw new NullPointerException("Unexpected state: LENS_FACING null");
@@ -449,7 +461,7 @@ class Camera2 extends CameraViewImpl {
         }
         Size largest = mPictureSizes.sizes(mAspectRatio).last();
         mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
-                ImageFormat.JPEG, /* maxImages */ 2);
+                ImageFormat.YUV_420_888, /* maxImages */ 2);
         mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, null);
     }
 
@@ -479,9 +491,12 @@ class Camera2 extends CameraViewImpl {
         Surface surface = mPreview.getSurface();
         try {
             mPreviewRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            mPreviewRequestBuilder.addTarget(surface);
-            mCamera.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
+            //mPreviewRequestBuilder.addTarget(surface);
+            mPreviewRequestBuilder.addTarget(mImageReader.getSurface());
+            mCamera.createCaptureSession(Arrays.asList(mImageReader.getSurface()),
                     mSessionCallback, null);
+            //mCamera.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
+            //    mSessionCallback, null);
         } catch (CameraAccessException e) {
             throw new RuntimeException("Failed to start camera session");
         }

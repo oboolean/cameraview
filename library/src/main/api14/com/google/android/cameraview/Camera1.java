@@ -19,8 +19,10 @@ package com.google.android.cameraview;
 import android.annotation.SuppressLint;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.hardware.Camera.PreviewCallback;
 import android.os.Build;
 import android.support.v4.util.SparseArrayCompat;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.io.IOException;
@@ -71,6 +73,14 @@ class Camera1 extends CameraViewImpl {
 
     private int mDisplayOrientation;
 
+
+    private PreviewCallback previewCallback = new PreviewCallback() {
+        @Override
+        public void onPreviewFrame(byte[] data, Camera camera) {
+            Log.d("hackajx", "--Camera1.onPreviewFrame :"+data.length);
+        }
+    };
+
     Camera1(Callback callback, PreviewImpl preview) {
         super(callback, preview);
         preview.setCallback(new PreviewImpl.Callback() {
@@ -93,6 +103,7 @@ class Camera1 extends CameraViewImpl {
         }
         mShowingPreview = true;
         mCamera.startPreview();
+        mCamera.setPreviewCallback(previewCallback);
         return true;
     }
 
@@ -117,6 +128,7 @@ class Camera1 extends CameraViewImpl {
                 mCamera.setPreviewDisplay(mPreview.getSurfaceHolder());
                 if (needsToStopPreview) {
                     mCamera.startPreview();
+                    mCamera.setPreviewCallback(previewCallback);
                 }
             } else {
                 mCamera.setPreviewTexture((SurfaceTexture) mPreview.getSurfaceTexture());
@@ -125,6 +137,7 @@ class Camera1 extends CameraViewImpl {
             throw new RuntimeException(e);
         }
     }
+
 
     @Override
     boolean isCameraOpened() {
@@ -245,6 +258,7 @@ class Camera1 extends CameraViewImpl {
                     mCallback.onPictureTaken(data);
                     camera.cancelAutoFocus();
                     camera.startPreview();
+                    mCamera.setPreviewCallback(previewCallback);
                 }
             });
         }
@@ -266,6 +280,7 @@ class Camera1 extends CameraViewImpl {
             mCamera.setDisplayOrientation(calcDisplayOrientation(displayOrientation));
             if (needsToStopPreview) {
                 mCamera.startPreview();
+                mCamera.setPreviewCallback(previewCallback);
             }
         }
     }
@@ -342,6 +357,7 @@ class Camera1 extends CameraViewImpl {
         mCamera.setParameters(mCameraParameters);
         if (mShowingPreview) {
             mCamera.startPreview();
+            mCamera.setPreviewCallback(previewCallback);
         }
     }
 

@@ -135,9 +135,9 @@ class TextureViewPreview extends PreviewImpl {
                             }, 0,
                     4);
         } else if (mDisplayOrientation == 180) {
-            matrix.postRotate(180, getWidth() / 2, getHeight() / 2);
+            //matrix.postRotate(180, getWidth() / 2, getHeight() / 2);
         }
-        mTextureView.setTransform(matrix);
+        //mTextureView.setTransform(matrix);
     }
 
 }
