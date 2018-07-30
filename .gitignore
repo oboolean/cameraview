@@ -4,7 +4,8 @@
 .DS_Store
 /build
 /captures
+.idea
 
-.idea/
+.idea/*.*
 !.idea/copyright/*.xml
 !.idea/codeStyleSettings.xml

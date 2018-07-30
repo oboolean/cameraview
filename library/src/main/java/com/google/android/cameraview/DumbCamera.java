@@ -23,22 +23,14 @@ import java.util.Set;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
-import android.support.v4.os.ParcelableCompat;
-import android.support.v4.os.ParcelableCompatCreatorCallbacks;
-import android.support.v4.view.ViewCompat;
-import android.util.AttributeSet;
-import android.widget.FrameLayout;
 
-public class CameraNoView {
+public class DumbCamera {
 
     /** The camera device faces the opposite direction as the device's screen. */
     public static final int FACING_BACK = Constants.FACING_BACK;
@@ -85,17 +77,17 @@ public class CameraNoView {
 
     @RequiresApi(api = VERSION_CODES.ICE_CREAM_SANDWICH)
     @SuppressWarnings("WrongConstant")
-    public CameraNoView(Context context) {
+    public DumbCamera(Context context) {
         // Internal setup
         final PreviewImpl preview = createPreviewImpl(context);
         mCallbacks = new CallbackBridge();
-        //if (Build.VERSION.SDK_INT < 21) {
+        if (Build.VERSION.SDK_INT < 21) {
             mImpl = new Camera1(mCallbacks, preview);
-        //} else if (Build.VERSION.SDK_INT < 23) {
-        //    mImpl = new Camera2(mCallbacks, preview, context);
-        //} else {
-        //    mImpl = new Camera2Api23(mCallbacks, preview, context);
-        //}
+        } else if (Build.VERSION.SDK_INT < 23) {
+            mImpl = new Camera2(mCallbacks, preview, context);
+        } else {
+            mImpl = new Camera2Api23(mCallbacks, preview, context);
+        }
         // Attributes
 
         // Display orientation detector
@@ -110,7 +102,7 @@ public class CameraNoView {
     @RequiresApi(api = VERSION_CODES.ICE_CREAM_SANDWICH)
     @NonNull
     private PreviewImpl createPreviewImpl(Context context) {
-        PreviewImpl preview = new NoView(context);
+        PreviewImpl preview = new DumbPreviewImpl(context);
         return preview;
     }
 
@@ -276,7 +268,7 @@ public class CameraNoView {
 
     /**
      * Take a picture. The result will be returned to
-     * {@link Callback#onPictureTaken(CameraNoView, byte[])}.
+     * {@link Callback#onPictureTaken(DumbCamera, byte[])}.
      */
     public void takePicture() {
         mImpl.takePicture();
@@ -305,21 +297,21 @@ public class CameraNoView {
                 mRequestLayoutOnOpen = false;
             }
             for (Callback callback : mCallbacks) {
-                callback.onCameraOpened(CameraNoView.this);
+                callback.onCameraOpened(DumbCamera.this);
             }
         }
 
         @Override
         public void onCameraClosed() {
             for (Callback callback : mCallbacks) {
-                callback.onCameraClosed(CameraNoView.this);
+                callback.onCameraClosed(DumbCamera.this);
             }
         }
 
         @Override
         public void onPictureTaken(byte[] data) {
             for (Callback callback : mCallbacks) {
-                callback.onPictureTaken(CameraNoView.this, data);
+                callback.onPictureTaken(DumbCamera.this, data);
             }
         }
 
@@ -345,7 +337,7 @@ public class CameraNoView {
 
 
     /**
-     * Callback for monitoring events about {@link CameraNoView}.
+     * Callback for monitoring events about {@link DumbCamera}.
      */
     @SuppressWarnings("UnusedParameters")
     public abstract static class Callback {
@@ -353,26 +345,26 @@ public class CameraNoView {
         /**
          * Called when camera is opened.
          *
-         * @param cameraView The associated {@link CameraNoView}.
+         * @param cameraView The associated {@link DumbCamera}.
          */
-        public void onCameraOpened(CameraNoView cameraView) {
+        public void onCameraOpened(DumbCamera cameraView) {
         }
 
         /**
          * Called when camera is closed.
          *
-         * @param cameraView The associated {@link CameraNoView}.
+         * @param cameraView The associated {@link DumbCamera}.
          */
-        public void onCameraClosed(CameraNoView cameraView) {
+        public void onCameraClosed(DumbCamera cameraView) {
         }
 
         /**
          * Called when a picture is taken.
          *
-         * @param cameraView The associated {@link CameraNoView}.
+         * @param cameraView The associated {@link DumbCamera}.
          * @param data       JPEG data.
          */
-        public void onPictureTaken(CameraNoView cameraView, byte[] data) {
+        public void onPictureTaken(DumbCamera cameraView, byte[] data) {
         }
 
         public void onPreviewFrame(byte[] bytes) {

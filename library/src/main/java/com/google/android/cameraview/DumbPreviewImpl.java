@@ -9,7 +9,7 @@ import android.view.Surface;
 import android.view.View;
 
 @RequiresApi(api = VERSION_CODES.ICE_CREAM_SANDWICH)
-public class NoView extends PreviewImpl{
+public class DumbPreviewImpl extends PreviewImpl{
 
     private Context mContext;
 
@@ -19,7 +19,7 @@ public class NoView extends PreviewImpl{
 
     private View mView;
 
-    public NoView(Context context){
+    public DumbPreviewImpl(Context context){
         mContext = context;
         mView = new View(mContext);
         mSurfaceTexture = new SurfaceTexture(0);
